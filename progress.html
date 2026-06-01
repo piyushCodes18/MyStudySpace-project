@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>MyStudySpace — Progress Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@600;700&family=Poppins:wght@400;500;600&display=swap"
+          rel="stylesheet">
+
+    <style>
+        :root {
+          --bg: linear-gradient(135deg, #a2c2e4, #fce3d3);
+          --card: #ffffff;
+          --text: #0f1724;
+          --muted: #6b7280;
+          --accent: #8b5cf6;
+          --accent-2: #7c3aed;
+          --shadow: 0 8px 30px rgba(2, 6, 23, 0.06);
+          --radius: 20px;
+          --input-border: #e6eefb;
+        }
+
+        body.dark {
+          --bg: linear-gradient(135deg, #1b2430, #0b1220);
+          --card: #0f1724;
+          --text: #e6eef8;
+          --muted: #9aa4b2;
+          --accent: #a78bfa;
+          --accent-2: #8b5cf6;
+          --shadow: 0 12px 40px rgba(2, 6, 23, 0.6);
+          --input-border: rgba(255, 255, 255, 0.06);
+        }
+
+        * {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+
+        body {
+          min-height: 100vh;
+          background: var(--bg);
+          color: var(--text);
+          font-family: 'Poppins', system-ui, -apple-system;
+          -webkit-font-smoothing: antialiased;
+          display: flex;
+          flex-direction: column;
+          animation: fadeIn 0.5s ease;
+        }
+
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 24px 32px;
+          gap: 16px;
+          flex-wrap: wrap;
+        }
+
+        .brand h1 {
+          font-family: 'Inter', sans-serif;
+          margin: 0 0 4px 0;
+          font-size: 26px;
+          font-weight: 700;
+          background: linear-gradient(135deg, var(--accent), var(--accent-2));
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        .subtitle {
+          color: var(--muted);
+          font-size: 14px;
+          font-weight: 400;
+        }
+
+        .controls {
+          display: flex;
+          gap: 12px;
+          align-items: center;
+          flex-wrap: wrap;
+        }
+
+        .back-btn {
+          padding: 10px 18px;
+          border-radius: 12px;
+          border: none;
+          background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+          cursor: pointer;
+          color: white;
+          font-weight: 600;
+          font-size: 14px;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.3s ease;
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+        }
+
+        .back-btn:hover {
+          background: linear-gradient(135deg, #7c3aed, #6d28d9);
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+        }
+
+        .dark-toggle {
+          width: 50px;
+          height: 28px;
+          background: var(--input-border);
+          border-radius: 999px;
+          padding: 3px;
+          display: inline-flex;
+          align-items: center;
+          cursor: pointer;
+          transition: background 0.3s ease;
+          box-shadow: var(--shadow);
+        }
+
+        .dark-toggle:hover {
+          transform: scale(1.05);
+        }
+
+        .dark-toggle .knob {
+          width: 22px;
+          height: 22px;
+          background: linear-gradient(135deg, var(--accent), var(--accent-2));
+          border-radius: 50%;
+          transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        body.dark .dark-toggle .knob {
+          transform: translateX(22px);
+        }
+
+        .container {
+          max-width: 1200px;
+          margin: 0 auto;
+          padding: 0 32px 40px;
+          display: grid;
+          gap: 24px;
+          width: 100%;
+        }
+
+        .card {
+          background: var(--card);
+          border-radius: var(--radius);
+          padding: 24px;
+          box-shadow: var(--shadow);
+          transition: all 0.3s ease;
+          animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(2, 6, 23, 0.12);
+        }
+
+        .card h3 {
+          margin: 0 0 20px 0;
+          font-family: 'Inter', sans-serif;
+          font-size: 20px;
+          font-weight: 700;
+          color: var(--text);
+        }
+
+        .subjects-row {
+          display: flex;
+          gap: 16px;
+          overflow-x: auto;
+          padding: 12px 4px;
+          scrollbar-width: thin;
+          scrollbar-color: var(--accent) transparent;
+        }
+
+        .subjects-row::-webkit-scrollbar {
+          height: 6px;
+        }
+
+        .subjects-row::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .subjects-row::-webkit-scrollbar-thumb {
+          background: var(--accent);
+          border-radius: 10px;
+        }
+
+        .subject-circle {
+          min-width: 140px;
+          width: 140px;
+          height: 140px;
+          border-radius: 50%;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(124, 58, 237, 0.05));
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+          box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+          transform: translateY(20px);
+          opacity: 0;
+          animation: fadeUp 0.6s ease forwards;
+          transition: all 0.3s ease;
+          border: 2px solid rgba(139, 92, 246, 0.2);
+        }
+
+        .subject-circle:hover {
+          transform: translateY(0) scale(1.05);
+          box-shadow: 0 12px 32px rgba(139, 92, 246, 0.25);
+          border-color: var(--accent);
+        }
+
+        @keyframes fadeUp {
+          to {
+            transform: translateY(0);
+            opacity: 1;
+          }
+        }
+
+        .subject-name {
+          font-weight: 600;
+          font-family: 'Inter', sans-serif;
+          font-size: 16px;
+          color: var(--text);
+        }
+
+        .subject-percent {
+          color: var(--accent);
+          font-weight: 700;
+          font-size: 24px;
+          font-family: 'Inter', sans-serif;
+        }
+
+        .subject-tasks {
+          font-size: 13px;
+          color: var(--muted);
+          font-weight: 500;
+        }
+
+        .charts {
+          display: grid;
+          grid-template-columns: 1fr 420px;
+          gap: 24px;
+          align-items: start;
+        }
+
+        .chart-container {
+          position: relative;
+          height: 320px;
+        }
+
+        canvas {
+          max-width: 100% !important;
+          height: auto !important;
+        }
+
+        .schedule-item {
+          padding: 16px;
+          border-radius: 16px;
+          background: linear-gradient(135deg, rgba(139, 92, 246, 0.05), rgba(124, 58, 237, 0.02));
+          border: 2px solid rgba(139, 92, 246, 0.15);
+          margin-bottom: 12px;
+          transition: all 0.3s ease;
+          cursor: default;
+        }
+
+        .schedule-item:hover {
+          border-color: var(--accent);
+          transform: translateX(4px);
+          box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+
+        .schedule-subject {
+          font-weight: 600;
+          font-size: 16px;
+          color: var(--text);
+          margin-bottom: 4px;
+        }
+
+        .schedule-time {
+          font-size: 14px;
+          color: var(--muted);
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .empty-state {
+          color: var(--muted);
+          text-align: center;
+          padding: 40px 20px;
+          font-size: 15px;
+        }
+
+        footer {
+          padding: 24px;
+          text-align: center;
+          color: var(--muted);
+          margin-top: auto;
+          font-size: 14px;
+        }
+
+        @media (max-width: 960px) {
+          .charts {
+            grid-template-columns: 1fr;
+          }
+          .container {
+            padding: 0 20px 40px;
+          }
+          header {
+            padding: 20px 20px;
+          }
+          .subject-circle {
+            min-width: 120px;
+            width: 120px;
+            height: 120px;
+          }
+        }
+
+        @media (max-width: 640px) {
+          header {
+            flex-direction: column;
+            align-items: flex-start;
+          }
+          .brand h1 {
+            font-size: 22px;
+          }
+        }
+  </style>
+</head>
+
+<body>
+<header>
+    <div class="brand">
+        <h1>📊 Progress Dashboard</h1>
+        <p class="subtitle">Track your learning journey and achievements</p>
+    </div>
+
+      <div class="controls">
+          <button class="back-btn" onclick="location.href='main.html'">← Back to Dashboard</button>
+          <label style="color: var(--muted); font-size: 14px; font-weight: 500;">Dark Mode</label>
+          <div class="dark-toggle" id="darkSwitch">
+              <div class="knob"></div>
+          </div>
+      </div>
+  </header>
+
+  <main class="container">
+      <section class="card">
+          <h3>📚 Subject Progress</h3>
+          <div class="subjects-row" id="subjectsRow"></div>
+      </section>
+
+      <section class="card charts">
+          <div>
+              <h3>📈 Overall Completion</h3>
+              <div class="chart-container">
+                  <canvas id="overallChart"></canvas>
+              </div>
+          </div>
+
+        <div>
+            <h3>⏰ Today's Study Schedule</h3>
+            <div id="scheduleList"></div>
+        </div>
+    </section>
+  </main>
+
+  <footer>📚 2025 MyStudySpace</footer>
+
+  <script>
+      const savedTheme = localStorage.getItem('mss_theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark');
+      }
+
+      const darkSwitch = document.getElementById('darkSwitch');
+      const knob = darkSwitch.querySelector('.knob');
+
+      if (savedTheme === 'dark' && knob) {
+        knob.style.transform = 'translateX(22px)';
+      }
+
+      darkSwitch.addEventListener('click', () => {
+        document.body.classList.toggle('dark');
+        const isDark = document.body.classList.contains('dark');
+        localStorage.setItem('mss_theme', isDark ? 'dark' : 'light');
+        if (knob) {
+          knob.style.transform = isDark ? 'translateX(22px)' : 'translateX(0)';
+        }
+      });
+
+      const getTasks = () => {
+        try {
+          return JSON.parse(localStorage.getItem('tasks') || '[]');
+        } catch {
+          return [];
+        }
+      };
+
+      const getSlots = () => {
+        try {
+          return JSON.parse(localStorage.getItem('studySchedule') || '[]');
+        } catch {
+          return [];
+        }
+      };
+
+      const getProfileSubjects = () => {
+        try {
+          return JSON.parse(localStorage.getItem('userSubjects') || '[]');
+        } catch {
+          return [];
+        }
+      };
+
+      const computeProgress = subjects => {
+        const tasks = getTasks();
+        return subjects.map(subject => {
+          const key = subject.toLowerCase().slice(0, 4);
+          const related = tasks.filter(t => (t.text || '').toLowerCase().includes(key));
+          const done = related.filter(r => r.done).length;
+          const percent = related.length ? Math.round((done / related.length) * 100) : 0;
+          return { subject, total: related.length, done, percent };
+        });
+      };
+
+      const renderSubjects = () => {
+        const profileSubjects = getProfileSubjects();
+        const defaultSubjects = ['Maths', 'Physics', 'Chemistry', 'Biology', 'English', 'History'];
+        const subjects = profileSubjects.length ? profileSubjects : defaultSubjects;
+        const row = document.getElementById('subjectsRow');
+        row.innerHTML = '';
+
+        const data = computeProgress(subjects);
+
+        if (data.length === 0) {
+          row.innerHTML = '<div class="empty-state">No subjects found. Add tasks to see progress!</div>';
+          return;
+        }
+
+        data.forEach((item, index) => {
+          const circle = document.createElement('div');
+          circle.className = 'subject-circle';
+          circle.style.animationDelay = `${index * 0.1}s`;
+          circle.innerHTML = `
+            <div class="subject-name">${item.subject}</div>
+            <div class="subject-percent">${item.percent}%</div>
+            <div class="subject-tasks">${item.done} of ${item.total} done</div>
+          `;
+          row.appendChild(circle);
+        });
+      };
+
+      let chartInstance;
+
+      const renderOverall = () => {
+        const tasks = getTasks();
+        const done = tasks.filter(t => t.done).length;
+        const total = tasks.length || 1;
+        const remaining = total - done;
+
+        const ctx = document.getElementById('overallChart').getContext('2d');
+
+        if (chartInstance) {
+          chartInstance.destroy();
+        }
+
+        const accentColor = getComputedStyle(document.documentElement)
+          .getPropertyValue('--accent').trim() || '#8b5cf6';
+
+        chartInstance = new Chart(ctx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Completed', 'Remaining'],
+            datasets: [{
+              data: [done, remaining],
+              backgroundColor: [accentColor, 'rgba(139, 92, 246, 0.15)'],
+              borderWidth: 0,
+              borderRadius: 8,
+            }]
+          },
+          options: {
+            cutout: '70%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  padding: 20,
+                  font: {
+                    size: 14,
+                    family: "'Inter', sans-serif",
+                    weight: '600'
+                  },
+                  color: getComputedStyle(document.documentElement)
+                    .getPropertyValue('--text').trim()
+                }
+              },
+              tooltip: {
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                padding: 12,
+                cornerRadius: 8,
+                titleFont: {
+                  size: 14,
+                  family: "'Inter', sans-serif"
+                },
+                bodyFont: {
+                  size: 13
+                }
+              }
+            },
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: {
+              animateRotate: true,
+              animateScale: true,
+              duration: 1000,
+              easing: 'easeInOutQuart'
+            }
+          }
+        });
+      };
+
+      const renderSchedule = () => {
+        const slots = getSlots();
+        const container = document.getElementById('scheduleList');
+        container.innerHTML = '';
+
+        if (slots.length === 0) {
+          container.innerHTML = '<div class="empty-state">No study slots scheduled for today.<br>Add some in your dashboard!</div>';
+          return;
+        }
+
+        slots.forEach(slot => {
+          const item = document.createElement('div');
+          item.className = 'schedule-item';
+          item.innerHTML = `
+            <div class="schedule-subject">${slot.subject}</div>
+            <div class="schedule-time">
+              🕐 ${slot.from} → ${slot.to}
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      };
+
+      const renderAll = () => {
+        renderSubjects();
+        renderOverall();
+        renderSchedule();
+      };
+
+      window.addEventListener('storage', renderAll);
+      document.addEventListener('DOMContentLoaded', renderAll);
+  </script>
+</body>
+</html>
